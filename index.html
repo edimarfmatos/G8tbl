@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Integração Sistema → Google Sheets</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 40px;
+    }
+    .box {
+      background: #fff;
+      padding: 30px;
+      max-width: 500px;
+      margin: auto;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 15px;
+      width: 100%;
+    }
+    button {
+      background: #1976d2;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #125aa0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h2>Enviar planilha para Google Sheets</h2>
+
+  <input type="file" id="fileInput" accept=".xlsx,.csv">
+
+  <button onclick="enviar()">Salvar / Enviar</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<script>
+const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyGYQw4ZJ3R9eI-RKBpMwMFWK68--xFIUfSNnZUf9BjT-MaU-DJqqTv5JJD0kZcADsgnQ/exec";
+
+function enviar() {
+  const file = document.getElementById("fileInput").files[0];
+
+  if (!file) {
+    alert("Selecione a planilha do sistema");
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: "array" });
+
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+
+    const dados = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    fetch(URL_SCRIPT, {
+      method: "POST",
+      body: JSON.stringify(dados)
+    })
+    .then(response => response.text())
+    .then(msg => alert(msg))
+    .catch(() => alert("Erro ao enviar os dados"));
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+</script>
+
+</body>
+</html>
