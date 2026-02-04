@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Integração Sistema Corporativo → Google Sheets</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f4f7;
+      padding: 40px;
+    }
+    .container {
+      background: #ffffff;
+      max-width: 520px;
+      margin: auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 10px;
+    }
+    p {
+      color: #555;
+      font-size: 14px;
+    }
+    input[type=file] {
+      margin-top: 20px;
+      width: 100%;
+      font-size: 16px;
+    }
+    button {
+      margin-top: 25px;
+      padding: 12px;
+      width: 100%;
+      font-size: 16px;
+      background-color: #1976d2;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #125aa0;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>Enviar planilha do sistema</h2>
+  <p>Selecione o Excel exportado do sistema corporativo.<br>
+     Os dados serão enviados automaticamente para o Google Sheets.</p>
+
+  <input type="file" id="fileInput" accept=".xlsx,.csv">
+
+  <button onclick="enviar()">Salvar / Enviar</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<script>
+const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyGYQw4ZJ3R9eI-RKBpMwMFWK68--xFIUfSNnZUf9BjT-MaU-DJqqTv5JJD0kZcADsgnQ/exec";
+
+function enviar() {
+  const file = document.getElementById("fileInput").files[0];
+
+  if (!file) {
+    alert("Selecione o arquivo do sistema.");
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function(event) {
+    const data = new Uint8Array(event.target.result);
+    const workbook = XLSX.read(data, { type: "array" });
+
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+
+    const dados = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    fetch(URL_SCRIPT, {
+      method: "POST",
+      body: JSON.stringify(dados)
+    })
+    .then(response => response.text())
+    .then(msg => alert(msg))
+    .catch(() => alert("Erro ao enviar os dados."));
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+</script>
+
+</body>
+</html>
